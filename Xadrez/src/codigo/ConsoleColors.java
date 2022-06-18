@@ -1,7 +1,7 @@
 package codigo;
 
 public class ConsoleColors {
-    public static final boolean useStyle = true;
+    public static final boolean useStyle = false;
 	
 	// Reset
     public static final String RESET = useStyle ? "\033[0m" : "";  // Text Reset
