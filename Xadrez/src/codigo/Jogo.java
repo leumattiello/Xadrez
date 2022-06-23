@@ -2,14 +2,9 @@ package codigo;
 
 import java.util.*;
 
-//TODO Implementar Coroação dos peões
-//TODO Implementar INTELIGENCIA ARTIFICIAL
-//TODO IA esta entrando em loop infinito em determinadas condições de xeque
-
-
 /**
  * @author Humberto Mattiello
- * @date Julho 2021
+ * @date July 2021
  *
  */
 public class Jogo {
@@ -48,19 +43,9 @@ public class Jogo {
 		jogadorBrancas = new Jogador(true, true);
 		jogadorPretas = new Jogador(true, false);
 		peao = new PecaPeao('P');
-		peao.enPassant = false;
+		peao.setEnPassant(false);
 		reiBranco = new PecaRei('R');
-		reiBranco.jaMoveu = false;
-		reiBranco.roque = false;
-		reiBranco.roqueGrande = false;
-		reiBranco.xeque = false;
-		reiBranco.xequeMate = false;
 		reiPreto = new PecaRei('r');
-		reiPreto.jaMoveu = false;
-		reiPreto.roque = false;
-		reiPreto.roqueGrande = false;
-		reiPreto.xeque = false;
-		reiPreto.xequeMate = false;
 		listaDeJogadas = new ArrayList<>();
 		ultimasPosicoes = new ArrayList<>();
 		ultimasPosicoes.add(tabuleiro);
@@ -81,19 +66,9 @@ public class Jogo {
 		jogadorBrancas = brancas;
 		jogadorPretas = pretas;
 		peao = new PecaPeao('P');
-		peao.enPassant = false;
+		peao.setEnPassant(false);
 		reiBranco = new PecaRei('R');
-		reiBranco.jaMoveu = false;
-		reiBranco.roque = false;
-		reiBranco.roqueGrande = false;
-		reiBranco.xeque = false;
-		reiBranco.xequeMate = false;
 		reiPreto = new PecaRei('r');
-		reiPreto.jaMoveu = false;
-		reiPreto.roque = false;
-		reiPreto.roqueGrande = false;
-		reiPreto.xeque = false;
-		reiPreto.xequeMate = false;
 		listaDeJogadas = new ArrayList<>();
 		ultimasPosicoes = new ArrayList<>();
 	}
@@ -113,10 +88,19 @@ public class Jogo {
 		while (this.estado) {
 			this.tabuleiro.imprimeTabuleiro();
 			
-			if (reiBranco.xequeMate || reiPreto.xequeMate) {
-				System.out.println("Xeque-mate!");
-				System.out.println("Fim de jogo. Vitoria das " + (this.vencedor ? "Brancas!" : "Pretas!"));
-				break;			
+			if (this.lanceAtual > 2) {
+				if (reiBranco.isXequeMate(jogadaAtual, tabuleiro, true)) {
+					System.out.println("Xeque-mate!");
+					System.out.println("Fim de jogo. Vitoria das Pretas!");
+					this.vencedor = false;
+					break;			
+				}
+				if (reiPreto.isXequeMate(jogadaAtual, tabuleiro, true)) {
+					System.out.println("Xeque-mate!");
+					System.out.println("Fim de jogo. Vitoria das Brancas!");
+					this.vencedor = true;
+					break;	
+				}
 			}
 			
 			if (this.desistiu) {	
@@ -131,8 +115,30 @@ public class Jogo {
 			}
 			
 			if (this.propostaEmpate) {
-				System.out.println((vezDasBrancas ? "Brancas" : "Pretas") + "propoem empate.");
+				System.out.println((vezDasBrancas ? "Brancas" : "Pretas") + " propoem empate.");
 				System.out.println("Digite \"aceitar\" ou \"rejeitar\".");
+				
+				// Caso seja uma IA, faz uma marcacao em um tabuleiro ficticio para indicar proposta de empate.
+				boolean isIA = false;				
+				if(!vezDasBrancas) {
+					if(!jogadorBrancas.isHumano()) {
+						isIA = true;
+					}
+				}
+				else {
+					if(!jogadorPretas.isHumano()) {
+						isIA = true;
+					}
+				}
+				
+				if(isIA) {
+					Tabuleiro t = new Tabuleiro();
+					t.casas[1][1] = 'E';
+					lance = (!vezDasBrancas ? jogadorBrancas.coletarJogada(t, jogadaAtual, ultimaJogadaValida) : jogadorPretas.coletarJogada(t, jogadaAtual, ultimaJogadaValida));					
+				}
+				else {
+					lance = jogadaAtual.coletarJogada(tabuleiro);
+				}			
 			}
 			else {			
 				System.out.println("Jogam as " + (vezDasBrancas ? "brancas" : "pretas"));
@@ -140,44 +146,31 @@ public class Jogo {
 				System.out.println("1) Digite alguma jogada no formato \"e2-e4\", por exemplo.");
 				System.out.println("2) Digite \"empate\" para propor empate.");
 				System.out.println("3) Digite \"desistir\" para desistir do jogo.");				
-				if (reiBranco.xeque || reiPreto.xeque)
+				if (reiBranco.emXeque() || reiPreto.emXeque()) {
 					System.out.println("Xeque!");
+				}
+				lance = (vezDasBrancas ? jogadorBrancas.coletarJogada(tabuleiro, jogadaAtual, ultimaJogadaValida) : jogadorPretas.coletarJogada(tabuleiro, jogadaAtual, ultimaJogadaValida));
 			}
 			
-			lance = (vezDasBrancas ? jogadorBrancas.coletarJogada(tabuleiro, jogadaAtual, ultimaJogadaValida) : jogadorPretas.coletarJogada(tabuleiro, jogadaAtual, ultimaJogadaValida));
+			System.out.print("\r\nLance " + (1 + this.lanceAtual / 2) + " (" + (this.vezDasBrancas ? "Brancas)" : "Pretas)") + ": ");
+			System.out.println(jogadaAtual);
 			
 			switch (lance) {
 				case 1: {
 					if (validarJogada()) {
 						// Se chegou ate aqui, eh porque a jogada eh valida
 						atualizarHistorico();
-						ajustarPosicionamentos(tabuleiro, jogadaAtual);
+						tabuleiro.atualizarTabuleiro(jogadaAtual);
 						
 						// Caso tenha sido movimento do rei, atualiza flags do rei
-						if (jogadaAtual.destino.getPeca().isRei()) {
-							if (vezDasBrancas)
-								reiBranco.jaMoveu = true;
-							else
-								reiPreto.jaMoveu = true;
+						if (jogadaAtual.getCasaDestino().getPeca().isRei()) {
+							if (vezDasBrancas) {
+								reiBranco.setJaMoveu(true);
+							}
+							else {
+								reiPreto.setJaMoveu(true);
+							}
 						}	
-
-						// Verifica se o xeque aplicado nao eh um xeque-mate
-						if (reiBranco.xeque) {
-							reiBranco.xequeMate = xequeMate(vezDasBrancas, jogadaAtual, tabuleiro);
-						}
-						if (reiPreto.xeque) {
-							reiPreto.xequeMate = xequeMate(vezDasBrancas, jogadaAtual, tabuleiro);
-						}
-
-						// Vitoria das brancas por Xeque-Mate
-						if (reiBranco.xequeMate) {
-							this.vencedor = false;
-						}
-						
-						// Vitoria das pretas por Xeque-Mate
-						if (reiPreto.xequeMate) {
-							this.vencedor = true;
-						}
 						
 						// Verificar condições de empate
 						if (verificarEmpate()) {
@@ -191,7 +184,7 @@ public class Jogo {
 						this.vezDasBrancas = !this.vezDasBrancas;
 						
 						// Atualizar ultimaJogadaValida
-						this.ultimaJogadaValida = copiaJogada(jogadaAtual);
+						this.ultimaJogadaValida = jogadaAtual.copiaJogada();
 					}
 					else {
 						System.out.println("Jogada invalida.");
@@ -227,6 +220,8 @@ public class Jogo {
 	 * @return true se a jogada for valida, false caso contrario
 	 */
 	private boolean validarJogada() {
+		jogadaAtual.setBrancas(vezDasBrancas);
+		
 		// Verifica se coordenadas de origem e destino sao validas
 		if (!this.jogadaAtual.isCoordenadasValidas())
 			return false;
@@ -237,54 +232,52 @@ public class Jogo {
 		
 		// Verifica se nao tem uma peca do jogador atual na casa de destino
 		if (!verificarCasaDestinoValida()) 
-			return false;
+			return false;		
 		
 		// Verifica se a jogada atual e um En Passant
 		if (!this.primeiraJogada) {
 			peao.setTipoPeca(vezDasBrancas ? 'P' : 'p');
-			peao.enPassant = peao.verificarEnPassant(tabuleiro, jogadaAtual, ultimaJogadaValida);
+			peao.verificarEnPassant(tabuleiro, jogadaAtual, ultimaJogadaValida);
 		}
 			
 		// Verifica se a jogada atual eh um Roque
 		if (vezDasBrancas) {
-			reiBranco.roque = reiBranco.verificarRoque(tabuleiro, jogadaAtual);
-			if (!reiBranco.roque)
-				reiBranco.roqueGrande = reiBranco.verificarRoqueGrande(tabuleiro, jogadaAtual);
+			if (!reiBranco.verificarRoque(tabuleiro, jogadaAtual, true))
+				reiBranco.verificarRoqueGrande(tabuleiro, jogadaAtual, true);
 		}
 		else {
-			reiPreto.roque = reiPreto.verificarRoque(tabuleiro, jogadaAtual);
-			if (!reiPreto.roque)
-				reiPreto.roqueGrande = reiPreto.verificarRoqueGrande(tabuleiro, jogadaAtual);
+			if (!reiPreto.verificarRoque(tabuleiro, jogadaAtual, true))
+				reiPreto.verificarRoqueGrande(tabuleiro, jogadaAtual, true);
 		}
 
 		// No caso de movimentações especiais, como roque por exemplo, não é necessário fazer a validação do movimento.
 		// Pois esses casos especiais ja foram tratados individualmente.
 		// Apenas no caso de movimentações simples é feita a validação.	
-		if (!(peao.enPassant || reiBranco.roque || reiBranco.roqueGrande || reiPreto.roque || reiPreto.roqueGrande)){ 
-			if (!isMovimentoValido())
+		if (!(peao.isEnPassant() || 
+			  reiBranco.isRoque() || reiBranco.isRoqueGrande() || 
+			  reiPreto.isRoque() || reiPreto.isRoqueGrande())){ 
+			if (!isMovimentoValido()) {
 				return false;	
+			}
 		}
 		
-		verificarCoroacao();
+		if(peao.verificarCoroacao(jogadaAtual, tabuleiro)) {
+			promoverPeao();
+		}
 		
-		// Essa verificacao eh para ver se o jogador deixaria o seu rei em xeque com este movimento
-		if (verificarXeque(vezDasBrancas))
-			return false;
-		
-		// Ja esta eh para ver se ele esta aplicando xeque no rei adversario
-		if (verificarXeque(!vezDasBrancas)) {
-			if(vezDasBrancas) {
-				reiPreto.xeque = true;
-				reiBranco.xeque = false;
-			}
-			else {
-				reiBranco.xeque = true;
-				reiPreto.xeque = false;
+		// Essa verificacao é para ver se o jogador deixaria o seu rei em xeque com este movimento
+		// Primeiro simula a jogada em um tabuleiro auxiliar.
+		Tabuleiro tabuleiroAuxiliar = tabuleiro.copiaTabuleiro();
+		tabuleiroAuxiliar.atualizarTabuleiro(jogadaAtual);
+		if(vezDasBrancas) {
+			if (reiBranco.isEmXeque(tabuleiroAuxiliar, false)) {
+				return false;
 			}
 		}
 		else {
-			reiBranco.xeque = false;
-			reiPreto.xeque = false;
+			if (reiPreto.isEmXeque(tabuleiroAuxiliar, false)) {
+				return false;
+			}
 		}
 		
 		return true;
@@ -297,18 +290,17 @@ public class Jogo {
 	 */
 	private boolean verificarPecaValidaOrigem() {
 		if (this.vezDasBrancas) {
-			if (this.jogadaAtual.origem.getPeca().isPecaBranca()) {
+			if (this.jogadaAtual.getCasaOrigem().getPeca().isPecaBranca()) {
 				return true;
 			}				
 		}
 		else {
-			if (this.jogadaAtual.origem.getPeca().isPecaPreta()) {
+			if (this.jogadaAtual.getCasaOrigem().getPeca().isPecaPreta()) {
 				return true;	
 			}				
 		}
 		return false;
-	}
-	
+	}	
 	
 	/**
 	 * Verifica se a peca na casa de destino nao eh da mesma cor
@@ -316,134 +308,28 @@ public class Jogo {
 	 */
 	private boolean verificarCasaDestinoValida() {
 		if (this.vezDasBrancas) {
-			if (!this.jogadaAtual.destino.getPeca().isPecaBranca()) {
+			if (!this.jogadaAtual.getCasaDestino().getPeca().isPecaBranca()) {
 				return true;
 			}				
 		}
 		else {
-			if (!this.jogadaAtual.destino.getPeca().isPecaPreta()) {
+			if (!this.jogadaAtual.getCasaDestino().getPeca().isPecaPreta()) {
 				return true;	
 			}				
 		}
 		return false;
-	}
-	
+	}	
 	
 	/**
 	 * Este metodo utiliza polimorfismo para invocar a validacao de movimento de acordo com a peca que foi jogada.
 	 * @return true se o movimento da peca e valido
 	 */
 	private boolean isMovimentoValido () {
-		return this.jogadaAtual.origem.getPeca().isMovimentoValido(jogadaAtual, tabuleiro, vezDasBrancas);
+		return this.jogadaAtual.getCasaOrigem().getPeca().isMovimentoValido(jogadaAtual, tabuleiro, vezDasBrancas);
 	}
 	
-	/**
-	 * Verifica se o movimento atual proposto e ou nao um xeque.
-	 * @param vezDasBrancas
-	 * @return true Se a jogada atual e um xeque
-	 */
-	private boolean verificarXeque(boolean vezDasBrancas) {
-		Tabuleiro tabuleiroPrevisto = new Tabuleiro ();
-		Jogada copiaDaJogada = copiaJogada(jogadaAtual);
-		
-		// Copia o tabuleiro manualmente, pois o java copia apenas a referencia na atribuicao normal de objetos usando operador =
-		for (int i = 0; i < 8; i++) 
-			for (int j = 0; j < 8; j++)
-				tabuleiroPrevisto.casas[i][j] = tabuleiro.casas[i][j];
-		
-		// Agora temos uma copia do tabuleiro e uma copia da jogada, podemos fazer o teste que quisermos
-		ajustarPosicionamentos(tabuleiroPrevisto, copiaDaJogada);
-		
-		if (vezDasBrancas) {
-			if (reiBranco.isEmXeque(tabuleiroPrevisto)) {
-				return true;
-			}
-		}
-		else {
-			if (reiPreto.isEmXeque(tabuleiroPrevisto)) {
-				return true;
-			}
-		}
-		
-		return false;
-	}
-	
-	
-	/**
-	 * Metodo que avalia, dada a configuracao atual do tabuleiro, se quem esta jogando esta em xeque-mate ou nao.
-	 * Este algoritmo de verificacao de xeque mate tem o seguinte fundamento.
-	 * Antes de mais nada, caso nao seja xeque, retorna false, pois nao tem como ser xeque mate se nao eh xeque, entao evita gastar processamento a toa.
-	 * Isto feito, primeiramente serao avaliadas todas as possibilidades de movimentacao do rei. Se alguma delas for valida, nao eh xeque mate, portanto retorna false.
-	 * Em seguida, cria uma pilha de todas as casas que possuem peca do jogador atual (exceto o rei).
-	 * Cada casa, ao ser desempilhada, ira gerar uma outra pilha de movimentos possiveis.
-	 * Se, em algum momento, for encontrado algum movimento valido, retorna false, pois nao eh xeque-mate.
-	 * Se nao foi encontrado nenhum movimento valido, o algoritmo termina retornando true.
-	 * @param vezDasBrancas
-	 * @param tabuleiro
-	 * @return
-	 */
-	private boolean xequeMate(boolean vezDasBrancas, Jogada ultimaJogada, Tabuleiro tabuleiro) {
-		PecaRei rei = !vezDasBrancas ? reiBranco : reiPreto;
-		Casa casaDoRei = new Casa();
-		Casa casaAux = new Casa();
-		Casa casaAux2 = new Casa();
-		Tabuleiro tabuleiroPrevisto = new Tabuleiro ();
-		Jogada jogadaTeste = new Jogada();
-		Stack<Casa> possiveisMovimentos = new Stack<Casa>();
-		Stack<Casa> casasComPeca = new Stack<Casa>();
-		char x = 'a';
-		int y = 1;
-		
-		// Se nao estiver em xeque, nao tem como ser xeque-mate!
-		if (!rei.xeque)
-			return false;	
-		
-		// Copia o tabuleiro manualmente, pois o java copia apenas a referencia na atribuicao normal de objetos usando operador =
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 8; j++) {				
-				tabuleiroPrevisto.casas[i][j] = tabuleiro.casas[i][j];
-
- 				// Aproveita e ja confere para identificar em qual casa esta o potencial rei que esta levando mate
-				if (tabuleiroPrevisto.casas[i][j] == rei.getTipoPeca()) {
-					x = tabuleiro.indexParaCoordenadaX(j);
-					y = tabuleiro.indexParaCoordenadaY(i);
-					casaDoRei.setPeca(rei.getTipoPeca());
-					casaDoRei.setCoordenadaX(x);
-					casaDoRei.setCoordenadaY(y);
-				}
-			}
-		}
-		
-		// Gera uma pilha com todas as pecas do jogador atual
-		casasComPeca = tabuleiroPrevisto.casasComPecasDestaCor(!vezDasBrancas);
-		while (!casasComPeca.isEmpty()) {
-			// E de cada uma dessas pecas, extrai sua pilha de movimentos validos
-			casaAux = casasComPeca.pop();			
-			possiveisMovimentos = casaAux.peca.movimentosValidos(tabuleiroPrevisto, casaAux, ultimaJogada, !vezDasBrancas);
 			
-			// Percorre pilha de casas extraida anteriormente, a cada passo simulando uma possivel jogada, vendo se o rei continua em xeque
-			while (!possiveisMovimentos.isEmpty()) {
-				casaAux2 = possiveisMovimentos.pop();
-				jogadaTeste.origem = casaAux;
-				jogadaTeste.destino = casaAux2;
-				tabuleiroPrevisto.atualizarTabuleiro(jogadaTeste);
-				
-				// Assim que encontrar um movimento valido para o processamento e retorna false para indicar que nao eh xeque-mate
-				if (!rei.isEmXeque(tabuleiroPrevisto))
-					return false;
-				
-				// Essa tentativa nao deu, entao retorna o tabuleiro para a posicao inicial para a verificacao seguinte...
-				// Para isso, basta inverter origem e destino, e atualizar o tabuleiro novamente
-				jogadaTeste.origem = casaAux2;
-				jogadaTeste.destino = casaAux;
-				tabuleiroPrevisto = copiaTabuleiro(tabuleiro);					
-			}				
-		}					
-			
-		return true;
-	}
-			
-private boolean verificarEmpate() {
+	private boolean verificarEmpate() {
 		if (empatePorFaltaDePecas(tabuleiro))
 			return true;
 		if (empatePorAfogamento(tabuleiro, jogadaAtual, vezDasBrancas))
@@ -460,40 +346,46 @@ private boolean verificarEmpate() {
 		PecaRei rei = !vezDasBrancas ? reiBranco : reiPreto;
 		Casa casaAux = new Casa();
 		Casa casaAux2 = new Casa();
-		Tabuleiro tabuleiroPrevisto = new Tabuleiro ();
+		Tabuleiro tabuleiroPrevisto = tabuleiro.copiaTabuleiro();
 		Jogada jogadaTeste = new Jogada();
 		Stack<Casa> possiveisMovimentos = new Stack<Casa>();
 		Stack<Casa> casasComPeca = new Stack<Casa>();
 		
 		// Se estiver em xeque, não pode ser afogamento
-		if (rei.xeque)
-			return false;	
-
-		tabuleiroPrevisto = copiaTabuleiro(tabuleiro);
+		if (vezDasBrancas) {
+			if (reiPreto.emXeque()) {
+				return false;
+			}
+		}
+		else {
+			if (reiBranco.emXeque()) {
+				return false;
+			}
+		}	
 		
 		// Gera uma pilha com todas as pecas do jogador atual
 		casasComPeca = tabuleiroPrevisto.casasComPecasDestaCor(!vezDasBrancas);
 		while (!casasComPeca.isEmpty()) {
 			// E de cada uma dessas pecas, extrai sua pilha de movimentos validos
 			casaAux = casasComPeca.pop();			
-			possiveisMovimentos = casaAux.peca.movimentosValidos(tabuleiroPrevisto, casaAux, ultimaJogada, !vezDasBrancas);
+			possiveisMovimentos = casaAux.getPeca().movimentosValidos(tabuleiroPrevisto, casaAux, ultimaJogada, !vezDasBrancas);
 			
 			// Percorre pilha de casas extraida anteriormente, a cada passo simulando uma possivel jogada, vendo se o rei continua em xeque
 			while (!possiveisMovimentos.isEmpty()) {
 				casaAux2 = possiveisMovimentos.pop();
-				jogadaTeste.origem = casaAux;
-				jogadaTeste.destino = casaAux2;
+				jogadaTeste.setCasaOrigem(casaAux);
+				jogadaTeste.setCasaDestino(casaAux2);
 				tabuleiroPrevisto.atualizarTabuleiro(jogadaTeste);
 				
-				// Assim que encontrar um movimento valido para o processamento e retorna false para indicar que nao eh xeque-mate
-				if (!rei.isEmXeque(tabuleiroPrevisto))
+				// Assim que encontrar um movimento valido para o processamento e retorna false para indicar que nao é afogamento
+				if (!rei.isEmXeque(tabuleiroPrevisto, false))
 					return false;
 				
 				// Essa tentativa nao deu, entao retorna o tabuleiro para a posicao inicial para a verificacao seguinte...
 				// Para isso, basta inverter origem e destino, e atualizar o tabuleiro novamente
-				jogadaTeste.origem = casaAux2;
-				jogadaTeste.destino = casaAux;
-				tabuleiroPrevisto = copiaTabuleiro(tabuleiro);					
+				jogadaTeste.setCasaOrigem(casaAux2);
+				jogadaTeste.setCasaDestino(casaAux);
+				tabuleiroPrevisto = tabuleiro.copiaTabuleiro();					
 			}				
 		}					
 			
@@ -507,7 +399,7 @@ private boolean verificarEmpate() {
 			return false;
 		
 		for (Tabuleiro tabuleiroAux : ultimasPosicoes) {
-			if (tabuleiroAux.equalsTo(tabuleiro)){
+			if (tabuleiroAux.equals(tabuleiro)){
 				contagemRepetidas++;
 			}
 			if (contagemRepetidas >= 3)
@@ -527,19 +419,19 @@ private boolean verificarEmpate() {
 		casasComPeca = tabuleiro.casasComPecasDestaCor(true);
 		while (!casasComPeca.isEmpty()) {
 			casaAux = casasComPeca.pop();
-			if (casaAux.peca.isPeao()) {
+			if (casaAux.getPeca().isPeao()) {
 				brancasTemPeca = true;
 				break;
 			}
-			if (casaAux.peca.isTorre()) {
+			if (casaAux.getPeca().isTorre()) {
 				brancasTemPeca = true;
 				break;
 			}
-			if (casaAux.peca.isDama()) {
+			if (casaAux.getPeca().isDama()) {
 				brancasTemPeca = true;
 				break;
 			}
-			if (casaAux.peca.isBispo()) {
+			if (casaAux.getPeca().isBispo()) {
 				if (boolAux) {
 					brancasTemPeca = true;
 					break;
@@ -547,7 +439,7 @@ private boolean verificarEmpate() {
 				boolAux = true;
 				continue;
 			}
-			if (casaAux.peca.isCavalo()) {
+			if (casaAux.getPeca().isCavalo()) {
 				if (boolAux) {
 					brancasTemPeca = true;					
 					break;
@@ -566,19 +458,19 @@ private boolean verificarEmpate() {
 		casasComPeca = tabuleiro.casasComPecasDestaCor(false);
 		while (!casasComPeca.isEmpty()) {
 			casaAux = casasComPeca.pop();
-			if (casaAux.peca.isPeao()) {
+			if (casaAux.getPeca().isPeao()) {
 				pretasTemPeca = true;
 				break;
 			}
-			if (casaAux.peca.isTorre()) {
+			if (casaAux.getPeca().isTorre()) {
 				pretasTemPeca = true;
 				break;
 			}
-			if (casaAux.peca.isDama()) {
+			if (casaAux.getPeca().isDama()) {
 				pretasTemPeca = true;
 				break;
 			}
-			if (casaAux.peca.isBispo()) {
+			if (casaAux.getPeca().isBispo()) {
 				if (boolAux) {
 					pretasTemPeca = true;
 					break;
@@ -586,7 +478,7 @@ private boolean verificarEmpate() {
 				boolAux = true;
 				continue;
 			}
-			if (casaAux.peca.isCavalo()) {
+			if (casaAux.getPeca().isCavalo()) {
 				if (boolAux) {
 					pretasTemPeca = true;
 					break;
@@ -602,82 +494,39 @@ private boolean verificarEmpate() {
 		return true;
 	}
 	
-	private void verificarCoroacao() {
+	private char promoverPeao() {
 		String auxStr = new String("");
+		
+		jogadaAtual.setCoroada(' ');
+		
 		if(vezDasBrancas) {
-			if(jogadaAtual.origem.getPeca().isPeao()) {
-				if(jogadaAtual.destino.getCoordenadaY() == 8) {
-					System.out.println("Peão coroado! Digite a peça (por exemplo D, C, etc): ");
-					Scanner input = new Scanner(System.in);
-					while(//auxStr.equals("") &&
-							!auxStr.equals("D") && !auxStr.equals("T") &&
-							!auxStr.equals("B") && !auxStr.equals("C"))
-						auxStr = input.nextLine();
-					tabuleiro.setPecaEm(jogadaAtual.origem.getCoordenadaX(), jogadaAtual.origem.getCoordenadaY(), auxStr.charAt(0));
-				}
+			System.out.println("Peão coroado! Digite a peça (por exemplo D, C, etc): ");
+			if (!jogadorBrancas.isHumano()) {
+				jogadaAtual.setCoroada('D');
+				return 'D';
 			}
+			Scanner input = new Scanner(System.in);
+			while(!auxStr.equals("D") && !auxStr.equals("T") &&
+				  !auxStr.equals("B") && !auxStr.equals("C"))
+				auxStr = input.nextLine();
+			jogadaAtual.setCoroada(auxStr.charAt(0));
 		}
 		else {
-			if(jogadaAtual.origem.getPeca().isPeao()) {
-				if(jogadaAtual.destino.getCoordenadaY() == 1) {
-					System.out.println("Peão coroado! Digite a peça (por exemplo d, c, etc): ");
-					Scanner input = new Scanner(System.in);
-					while(//auxStr.equals("") &&
-							!auxStr.equals("d") && !auxStr.equals("t") &&
-							!auxStr.equals("b") && !auxStr.equals("c"))
-						auxStr = input.nextLine();
-					tabuleiro.setPecaEm(jogadaAtual.origem.getCoordenadaX(), jogadaAtual.origem.getCoordenadaY(), auxStr.charAt(0));		
-				}
+			System.out.println("Peão coroado! Digite a peça (por exemplo d, c, etc): ");
+			if (!jogadorPretas.isHumano()) {
+				jogadaAtual.setCoroada('d');
+				return 'd';
 			}
+			Scanner input = new Scanner(System.in);
+			while(!auxStr.equals("d") && !auxStr.equals("t") &&
+				  !auxStr.equals("b") && !auxStr.equals("c"))
+				auxStr = input.nextLine();
+			jogadaAtual.setCoroada(auxStr.charAt(0));
 		}
+		
+		return jogadaAtual.getCoroada();
 	}
 
-	/**
-	 * Metodo para, apos todas as validacoes de movimento, efetuar a jogada, alterando o posicionamento das
-	 * pecas no tabuleiro.
-	 * @param tabuleiro
-	 * @param jogada
-	 */
-	private void ajustarPosicionamentos(Tabuleiro tabuleiro, Jogada jogada) {
-		// Ajusta o novo posicionamento das pecas, para depois atualizar o tabuleiro
-		jogada.origem.setPeca(tabuleiro.getPecaEm(jogada.origem.getCoordenadaX(), jogada.origem.getCoordenadaY()));
-		jogada.destino.setPeca(tabuleiro.getPecaEm(jogada.origem.getCoordenadaX(), jogada.origem.getCoordenadaY()));
-		jogada.origem.setPeca(' ');
-		
-		// O En Passant exige um reposicionamento especial (remocao do peao que foi comido)
-		if (peao.enPassant) {
-			// Pega coluna para a qual o peao se moveu
-			char colDoEnPassant = jogada.destino.getCoordenadaX();
-			
-			// Pega a fileira para a qual o peao se moveu, menos 1
-			int filDoEnPassant = this.vezDasBrancas ? jogada.destino.getCoordenadaY() - 1 : jogada.destino.getCoordenadaY() + 1;
-			
-			// Remove a peca nessas coordenadas
-			tabuleiro.casas[tabuleiro.coordenadaYParaIndex(filDoEnPassant)][tabuleiro.coordenadaXParaIndex(colDoEnPassant)] = ' ';			
-		}
-		
-		// O Roque exige um posicionamento especial (ajuste da torre)
-		if (reiBranco.roque) {
-			tabuleiro.casas[tabuleiro.coordenadaYParaIndex(1)][tabuleiro.coordenadaXParaIndex('h')] = ' ';
-			tabuleiro.casas[tabuleiro.coordenadaYParaIndex(1)][tabuleiro.coordenadaXParaIndex('f')] = 'T';
-		}
-		if (reiPreto.roque) {
-			tabuleiro.casas[tabuleiro.coordenadaYParaIndex(8)][tabuleiro.coordenadaXParaIndex('h')] = ' ';
-			tabuleiro.casas[tabuleiro.coordenadaYParaIndex(8)][tabuleiro.coordenadaXParaIndex('f')] = 't';				
-		}		
-		if (reiBranco.roqueGrande) {
-			tabuleiro.casas[tabuleiro.coordenadaYParaIndex(1)][tabuleiro.coordenadaXParaIndex('a')] = ' ';
-			tabuleiro.casas[tabuleiro.coordenadaYParaIndex(1)][tabuleiro.coordenadaXParaIndex('d')] = 'T';
-		}
-		if (reiPreto.roqueGrande) {
-			tabuleiro.casas[tabuleiro.coordenadaYParaIndex(8)][tabuleiro.coordenadaXParaIndex('a')] = ' ';
-			tabuleiro.casas[tabuleiro.coordenadaYParaIndex(8)][tabuleiro.coordenadaXParaIndex('d')] = 't';				
-		}
-		
-		// Refletir no tabuleiro as mudancas feitas na variavel jogadaAtual
-		tabuleiro.atualizarTabuleiro(jogada);
-	}
-	
 	/**
 	 * Método que incrementa o marcador de jogada atual e as listas com os históricos
 	 * de lances e posicionamentos. Essas listas devem ser mantidas para serem usadas por
@@ -685,54 +534,7 @@ private boolean verificarEmpate() {
 	 */
 	private void atualizarHistorico() {
 		lanceAtual++;
-		listaDeJogadas.add(copiaJogada(jogadaAtual));
-		ultimasPosicoes.add(copiaTabuleiro(tabuleiro));
-	}
-	
-	/**
-	 * Metodo acessorio para criar uma copia de um objeto do tipo Jogada.
-	 * Necessario pois a atribuicao simples copia apenas a referencia.
-	 * @param jogada
-	 * @return Um novo objeto com as mesmas propriedades do elemento passado como parametro.
-	 */
-	private Jogada copiaJogada(Jogada jogada) {
-		Jogada jogadaAux = new Jogada ();
-		
-		// Copiar manualmente todos os dados, caso contrario o Java copia apenas a referencia
-		Peca pecaAux = new Peca();
-		pecaAux.setTipoPeca(jogada.destino.peca.getTipoPeca());
-		
-		Casa casaOrigemAux = new Casa();
-		casaOrigemAux.setPeca(pecaAux.getTipoPeca());
-		casaOrigemAux.setCoordenadaX(jogada.origem.getCoordenadaX());
-		casaOrigemAux.setCoordenadaY(jogada.origem.getCoordenadaY());
-		
-		Casa casaDestinoAux = new Casa();
-		casaDestinoAux.setPeca(pecaAux.getTipoPeca());
-		casaDestinoAux.setCoordenadaX(jogada.destino.getCoordenadaX());
-		casaDestinoAux.setCoordenadaY(jogada.destino.getCoordenadaY());
-		
-		int deslocamentoX = jogada.getDeslocamentoX();
-		int deslocamentoY = jogada.getDeslocamentoY();
-		
-		jogadaAux.origem = casaOrigemAux;
-		jogadaAux.destino = casaDestinoAux;
-		jogadaAux.setDeslocamentoX(deslocamentoX);
-		jogadaAux.setDeslocamentoY(deslocamentoY);
-		
-		return jogadaAux;
-	}
-	
-	private Tabuleiro copiaTabuleiro (Tabuleiro tabuleiro) {
-		Tabuleiro tabuleiroAux = new Tabuleiro();
-		
-		for (int i = 0; i < 8; i++) {
-			for (int j = 0; j < 8; j++) {				
-				tabuleiroAux.casas[i][j] = tabuleiro.casas[i][j];
-			}
-		}
-		
-		return tabuleiroAux;
-	}
-	
+		listaDeJogadas.add(jogadaAtual.copiaJogada());
+		ultimasPosicoes.add(tabuleiro.copiaTabuleiro());
+	}	
 }

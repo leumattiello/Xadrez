@@ -3,7 +3,10 @@ package codigo;
 import java.util.Stack;
 
 public class PecaBispo extends Peca {
-	// Construtor
+	//
+	// Construtores
+	//
+	
 	public PecaBispo() {
 		super('B');
 	}
@@ -12,14 +15,23 @@ public class PecaBispo extends Peca {
 		super(tipoPeca);
 	}
 
-	// Logica
+	
+	//
+	// Setters, Getters e Overrides Úteis implementados na superclasse
+	//
+	
+	
+	//
+	// Lógica
+	//
+	
 	@Override
 	public boolean isMovimentoValido(Jogada jogada, Tabuleiro tabuleiro, boolean vezDasBrancas) {
-		int deslocamentoAbsoluto = jogada.getDeslocamentoX() < 0 ? -1*jogada.getDeslocamentoX() : jogada.getDeslocamentoX();
 		boolean deslocamentoPositivoEmX = jogada.getDeslocamentoX() >= 0 ? true : false;
 		boolean deslocamentoPositivoEmY = jogada.getDeslocamentoY() >= 0 ? true : false;
-		int auxIntFromChar = 0;
 		char auxChar = 'a';
+		int auxIntFromChar = 0;
+		int deslocamentoAbsoluto = jogada.getDeslocamentoX() < 0 ? -1*jogada.getDeslocamentoX() : jogada.getDeslocamentoX();
 		Casa casaAux = new Casa();
 		
 		// Tem que deslocar pelo menos 1 casa
@@ -35,10 +47,10 @@ public class PecaBispo extends Peca {
 		if (deslocamentoPositivoEmX)
 			if (deslocamentoPositivoEmY){ // deslocamento positivo em X e Y
 				for (int i = 1; i < deslocamentoAbsoluto; i++) {
-					auxIntFromChar = tabuleiro.coordenadaXParaIndex(jogada.origem.getCoordenadaX()) + i;
+					auxIntFromChar = tabuleiro.coordenadaXParaIndex(jogada.getCasaOrigem().getCoordenadaX()) + i;
 					auxChar = tabuleiro.indexParaCoordenadaX(auxIntFromChar);
 					casaAux.setCoordenadaX(auxChar);
-					casaAux.setCoordenadaY(jogada.origem.getCoordenadaY() + i);
+					casaAux.setCoordenadaY(jogada.getCasaOrigem().getCoordenadaY() + i);
 					casaAux.setPeca(tabuleiro.getPecaEm(casaAux.getCoordenadaX(), casaAux.getCoordenadaY()));
 					if (casaAux.getPeca().isPeca())
 						return false;
@@ -46,9 +58,9 @@ public class PecaBispo extends Peca {
 			}
 			else { // deslocamento positivo em X, negativo em Y
 				for (int i = 1; i < deslocamentoAbsoluto; i++) {
-					auxIntFromChar = tabuleiro.coordenadaXParaIndex(jogada.origem.getCoordenadaX()) + i;
+					auxIntFromChar = tabuleiro.coordenadaXParaIndex(jogada.getCasaOrigem().getCoordenadaX()) + i;
 					auxChar = tabuleiro.indexParaCoordenadaX(auxIntFromChar);
-					casaAux.setCoordenadaX(auxChar);casaAux.setCoordenadaY(jogada.origem.getCoordenadaY() - i);
+					casaAux.setCoordenadaX(auxChar);casaAux.setCoordenadaY(jogada.getCasaOrigem().getCoordenadaY() - i);
 					casaAux.setPeca(tabuleiro.getPecaEm(casaAux.getCoordenadaX(), casaAux.getCoordenadaY()));
 					if (casaAux.getPeca().isPeca())
 						return false;
@@ -57,10 +69,10 @@ public class PecaBispo extends Peca {
 		else 
 			if (deslocamentoPositivoEmY) { // deslocamento negativo em X, positivo em Y
 				for (int i = 1; i < deslocamentoAbsoluto; i++) {
-					auxIntFromChar = tabuleiro.coordenadaXParaIndex(jogada.origem.getCoordenadaX()) - i;
+					auxIntFromChar = tabuleiro.coordenadaXParaIndex(jogada.getCasaOrigem().getCoordenadaX()) - i;
 					auxChar = tabuleiro.indexParaCoordenadaX(auxIntFromChar);
 					casaAux.setCoordenadaX(auxChar);
-					casaAux.setCoordenadaY(jogada.origem.getCoordenadaY() + i);
+					casaAux.setCoordenadaY(jogada.getCasaOrigem().getCoordenadaY() + i);
 					casaAux.setPeca(tabuleiro.getPecaEm(casaAux.getCoordenadaX(), casaAux.getCoordenadaY()));
 					if (casaAux.getPeca().isPeca())
 						return false;
@@ -68,10 +80,10 @@ public class PecaBispo extends Peca {
 			}
 			else { // deslocamento negativo em X e Y
 				for (int i = 1; i < deslocamentoAbsoluto; i++) {
-					auxIntFromChar = tabuleiro.coordenadaXParaIndex(jogada.origem.getCoordenadaX()) - i;
+					auxIntFromChar = tabuleiro.coordenadaXParaIndex(jogada.getCasaOrigem().getCoordenadaX()) - i;
 					auxChar = tabuleiro.indexParaCoordenadaX(auxIntFromChar);
 					casaAux.setCoordenadaX(auxChar);
-					casaAux.setCoordenadaY(jogada.origem.getCoordenadaY() - i);
+					casaAux.setCoordenadaY(jogada.getCasaOrigem().getCoordenadaY() - i);
 					casaAux.setPeca(tabuleiro.getPecaEm(casaAux.getCoordenadaX(), casaAux.getCoordenadaY()));
 					if (casaAux.getPeca().isPeca())
 						return false;
@@ -83,11 +95,11 @@ public class PecaBispo extends Peca {
 
 	@Override
 	public Stack<Casa> ameaca(Tabuleiro tabuleiro, Casa casa, boolean vezDasBrancas) {
-		Stack<Casa> casasAmeacadas = new Stack<Casa>();
-		Peca pecaAux = new Peca();
-		int intFromCharAux = 0;
 		char coordX = 'a';
 		int coordY = 1; // Lembrando que sera utilizado de 1 a 8
+		int intFromCharAux = 0;
+		Peca pecaAux = new Peca();
+		Stack<Casa> casasAmeacadas = new Stack<Casa>();
 		
 		// Bispo tem que ser verificado em 4 direcoes. Em cada uma delas,
 		// percorre a diagonal ate encontrar uma peca. Vai empilhando as casas pelo caminho. 
@@ -211,5 +223,4 @@ public class PecaBispo extends Peca {
 		
 		return casasAmeacadas;
 	}
-
 }

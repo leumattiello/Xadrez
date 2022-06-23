@@ -3,7 +3,10 @@ package codigo;
 import java.util.Stack;
 
 public class PecaDama extends Peca {
+	//
 	// Construtores
+	//
+	
 	public PecaDama() {
 		super('D');
 	}
@@ -11,8 +14,17 @@ public class PecaDama extends Peca {
 	public PecaDama(char tipoPeca) {
 		super(tipoPeca);
 	}
+	
 
-	// Logica
+	//
+	// Setters, Getters e Overrides Úteis implementados na superclasse
+	//
+	
+	
+	//
+	// Lógica
+	//
+	
 	@Override
 	public boolean isMovimentoValido(Jogada jogada, Tabuleiro tabuleiro, boolean vezDasBrancas) {
 		PecaBispo bispo = vezDasBrancas? new PecaBispo('B') : new PecaBispo('b');
@@ -29,10 +41,10 @@ public class PecaDama extends Peca {
 	
 	@Override
 	public Stack<Casa> ameaca(Tabuleiro tabuleiro, Casa casa, boolean vezDasBrancas) {
-		Stack<Casa> casasAmeacadas = new Stack<Casa>();
-		Stack<Casa> casasAmeacadasBispo = new Stack<Casa>();
 		PecaBispo bispo = this.isBranca() ? new PecaBispo('B') : new PecaBispo('b');
 		PecaTorre torre = this.isBranca() ? new PecaTorre('T') : new PecaTorre('t');
+		Stack<Casa> casasAmeacadas = new Stack<Casa>();
+		Stack<Casa> casasAmeacadasBispo = new Stack<Casa>();
 
 		// Para a dama eh so fazer a coleta dos algoritmos do bispo + torre.
 		casasAmeacadasBispo = bispo.ameaca(tabuleiro, casa, vezDasBrancas);
@@ -51,7 +63,7 @@ public class PecaDama extends Peca {
 	 */
 	public boolean estaSendoAmeacado (Stack<Casa> casasAmeacadas) {
 		while (!casasAmeacadas.isEmpty()) {
-			if (casasAmeacadas.pop().peca.getTipoPeca() == this.getTipoPeca())
+			if (casasAmeacadas.pop().getTipoPeca() == this.getTipoPeca())
 				return true;
 		}		
 		return false;

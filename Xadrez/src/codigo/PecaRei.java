@@ -3,27 +3,79 @@ package codigo;
 import java.util.*;
 
 public class PecaRei extends Peca {
-	public boolean jaMoveu;
-	public boolean roque;
-	public boolean roqueGrande;
-	public boolean xeque;
-	public boolean xequeMate;
+	private boolean jaMoveu;
+	private boolean xeque;
+	private boolean xequeMate;
+	private boolean roque;
+	private boolean roqueGrande;
+
 	
+	// 
 	// Construtores
+	//
+	
 	public PecaRei () {
-		new PecaRei('R');
+		super('R');
+		this.jaMoveu = false;
+		this.xeque = false;
 	}
 	
 	public PecaRei(char tipoPeca) {
 		super(tipoPeca);
 		this.jaMoveu = false;
-		this.roque = false;
-		this.roqueGrande = false;
 		this.xeque = false;
-		this.xequeMate = false;
+	}
+	
+
+	//
+	// Setters, Getters e Overrides Úteis implementados na superclasse
+	//
+	
+	public boolean jaMoveu() {
+		return jaMoveu;
+	}
+	
+	public void setJaMoveu(boolean moveu) {
+		this.jaMoveu = moveu;
+	}
+		
+	public boolean emXeque() {
+		return xeque;
 	}
 
-	// Logica
+	public void setXeque(boolean xeque) {
+		this.xeque = xeque;
+	}
+
+	public boolean emXequeMate() {
+		return xequeMate;
+	}
+
+	public void setXequeMate(boolean xequeMate) {
+		this.xequeMate = xequeMate;
+	}	
+	
+	public boolean isRoque() {
+		return roque;
+	}
+	
+	public void setRoque(boolean roque) {
+		this.roque = roque;
+	}
+	
+	public boolean isRoqueGrande() {
+		return roqueGrande;
+	}
+	
+	public void setRoqueGrande(boolean roqueGrande) {
+		this.roqueGrande = roqueGrande;
+	}
+	
+	
+	//
+	// Lógica
+	//
+
 	@Override
 	public boolean isMovimentoValido(Jogada jogada, Tabuleiro tabuleiro, boolean vezDasBrancas) {
 		int deslocamentoAbsolutoX = jogada.getDeslocamentoX() > 0 ? jogada.getDeslocamentoX() : -1*jogada.getDeslocamentoX();
@@ -42,11 +94,11 @@ public class PecaRei extends Peca {
 	
 	@Override
 	public Stack<Casa> ameaca(Tabuleiro tabuleiro, Casa casa, boolean vezDasBrancas) {
-		Stack<Casa> casasAmeacadas = new Stack<Casa>();
-		Peca pecaAux = new Peca();
-		int intFromCharAux = 0;
 		char coordX = 'a';
 		int coordY = 1; // Lembrando que sera utilizado de 1 a 8
+		int intFromCharAux = 0;
+		Peca pecaAux = new Peca();
+		Stack<Casa> casasAmeacadas = new Stack<Casa>();
 		
 		// No caso do rei, consultar individualmente cada uma das 8 casas adjacentes.
 		// Comecando pela casa a frente e a direita, e progredindo em sentido anti-horario
@@ -171,10 +223,15 @@ public class PecaRei extends Peca {
 	 */
 	@Override
 	public Stack<Casa> movimentosValidos (Tabuleiro tabuleiro, Casa casa, Jogada ultimaJogada, Boolean vezDasBrancas){
-		Stack<Casa> movimentosValidos = new Stack<Casa>();
-		Jogada jogadaAux = new Jogada();
+		return this.movimentosValidos(tabuleiro, casa, ultimaJogada, vezDasBrancas, false);
+	}
+	
+	@Override
+	public Stack<Casa> movimentosValidos (Tabuleiro tabuleiro, Casa casa, Jogada ultimaJogada, Boolean vezDasBrancas, boolean atualizarFlags){
 		char x = 'a';
 		int y = 1;
+		Jogada jogadaAux = new Jogada();
+		Stack<Casa> movimentosValidos = new Stack<Casa>();
 		
 		// Pegue todas as casas ameacadas por esta peca
 		movimentosValidos = this.ameaca(tabuleiro, casa, vezDasBrancas);
@@ -182,16 +239,25 @@ public class PecaRei extends Peca {
 		// Testar as possibilidades de roque e roque grande
 		x = 'g';
 		y = this.isBranca() ? 1 : 8;		
-		jogadaAux.origem = casa;
-		jogadaAux.destino.setCoordenadaX(x);
-		jogadaAux.destino.setCoordenadaY(y);
-		if (this.verificarRoque(tabuleiro, jogadaAux)) {
-			movimentosValidos.push(new Casa (x, y));
+		jogadaAux.setCasaOrigem(casa);
+		jogadaAux.getCasaDestino().setCoordenadaX(x);
+		jogadaAux.getCasaDestino().setCoordenadaY(y);
+		if (atualizarFlags) {
+			this.isEmXeque(tabuleiro, atualizarFlags);
+		}
+		if (this.verificarRoque(tabuleiro, jogadaAux, false)) {
+			Casa c = new Casa (x, y, ' ');
+			// Usar o campo defesas para marcar que é roque
+			c.setDefesas(100);
+			movimentosValidos.push(c);
 		}
 		x = 'c';
-		jogadaAux.destino.setCoordenadaX(x);
-		if (this.verificarRoqueGrande(tabuleiro, jogadaAux)) {
-			movimentosValidos.push(new Casa (x, y));
+		jogadaAux.getCasaDestino().setCoordenadaX(x);
+		if (this.verificarRoqueGrande(tabuleiro, jogadaAux, false)) {
+			Casa c = new Casa (x, y, ' ');
+			// Usar o campo defesas para marcar que é roque
+			c.setDefesas(1000);
+			movimentosValidos.push(c);
 		}		
 		
 		return movimentosValidos;
@@ -201,30 +267,43 @@ public class PecaRei extends Peca {
 	 * @param tabuleiro
 	 * @return true se esta em xeque, false caso contrario
 	 */
-	public boolean isEmXeque(Tabuleiro tabuleiro) {
+	public boolean isEmXeque(Tabuleiro tabuleiro, boolean atualizaFlags) {
+		Peca pecaAux = new Peca();
+		Casa casaAux = new Casa();
+		Casa casaDoRei = new Casa();
 		Stack<Casa> pilhaDeCasas = new Stack<Casa>();
 		Stack<Casa> casasAmeacadas = new Stack<Casa>();
-		Casa casaAux = new Casa();
-		Peca pecaAux = new Peca();
+		
+		if(atualizaFlags)
+			this.setXeque(false);
 		
 		// Primeiramente, criar uma pilha com todas as casas que possuem peca do adversario
 		for (int i = 0; i < 8; i++) {
 			for (int j = 0; j < 8; j++) {
 				pecaAux.setTipoPeca(tabuleiro.casas[i][j]);
-				if (pecaAux.isPeca()) // Se tem alguma peca naquela casa
+				if(pecaAux.isRei()) {
+					if(pecaAux.isBranca() == this.isBranca()) {
+						casaDoRei = new Casa(tabuleiro.indexParaCoordenadaX(j), tabuleiro.indexParaCoordenadaY(i), pecaAux.getTipoPeca());
+					}
+					
+				}
+				if (pecaAux.isPeca()) { // Se tem alguma peca naquela casa
 					if (this.isBranca() != pecaAux.isBranca()) { // Se a peca nao eh da mesma cor
 						// Nesse caso, tem que empilhar a casa
 						pilhaDeCasas.push(new Casa(tabuleiro.indexParaCoordenadaX(j), tabuleiro.indexParaCoordenadaY(i), pecaAux.getTipoPeca()));
 					}
+				}
 			}	
 		}
 		
 		// Desempilhar a pilha de casas, verificando se cada uma das pecas ameaca o rei
 		while (!pilhaDeCasas.isEmpty()) {
 			casaAux = pilhaDeCasas.pop();
-			casaAux.setPeca(casaAux.peca.getTipoPeca());
-			casasAmeacadas = casaAux.peca.ameaca(tabuleiro, casaAux, !this.isBranca());
-			if (estaSendoAmeacado(casasAmeacadas)){
+			casaAux.setPeca(casaAux.getTipoPeca());
+			casasAmeacadas = casaAux.getPeca().ameaca(tabuleiro, casaAux, !this.isBranca());
+			if (estaSendoAmeacado(casaDoRei, casasAmeacadas)){
+				if(atualizaFlags)
+					this.setXeque(true);
 				return true;
 			}
 		}
@@ -245,46 +324,56 @@ public class PecaRei extends Peca {
 	 * @param tabuleiro
 	 * @return
 	 */
-	public boolean isXequeMate(Jogada ultimaJogada, Tabuleiro tabuleiro) {
+	public boolean isXequeMate(Jogada ultimaJogada, Tabuleiro tabuleiro, boolean atualizaFlags) {
+		boolean xeque = this.isEmXeque(tabuleiro, atualizaFlags);
 		Casa casaAux = new Casa();
 		Casa casaAux2 = new Casa();
 		Tabuleiro tabuleiroPrevisto = tabuleiro.copiaTabuleiro();
 		Jogada jogadaTeste = new Jogada();
 		Stack<Casa> possiveisMovimentos = new Stack<Casa>();
 		Stack<Casa> casasComPeca = new Stack<Casa>();
-		char x = 'a';
-		int y = 1;
+		
+		if (atualizaFlags) {
+			this.setXequeMate(false);
+		}
 		
 		// Se nao estiver em xeque, nao tem como ser xeque-mate!
-		if (!this.isEmXeque(tabuleiro))
+		if (!xeque) {
 			return false;	
-		
+		}
+			
 		// Gera uma pilha com todas as pecas do jogador atual
 		casasComPeca = tabuleiroPrevisto.casasComPecasDestaCor(this.isBranca());
 		while (!casasComPeca.isEmpty()) {
 			// E de cada uma dessas pecas, extrai sua pilha de movimentos validos
 			casaAux = casasComPeca.pop();			
-			possiveisMovimentos = casaAux.peca.movimentosValidos(tabuleiroPrevisto, casaAux, ultimaJogada, this.isBranca());
+			possiveisMovimentos = casaAux.getPeca().movimentosValidos(tabuleiroPrevisto, casaAux, ultimaJogada, this.isBranca());
 			
 			// Percorre pilha de casas extraida anteriormente, a cada passo simulando uma possivel jogada, vendo se o rei continua em xeque
 			while (!possiveisMovimentos.isEmpty()) {
 				casaAux2 = possiveisMovimentos.pop();
-				jogadaTeste.origem = casaAux;
-				jogadaTeste.destino = casaAux2;
+				jogadaTeste.setCasaOrigem(casaAux);
+				jogadaTeste.setCasaDestino(casaAux2);
 				tabuleiroPrevisto.atualizarTabuleiro(jogadaTeste);
 				
 				// Assim que encontrar um movimento valido para o processamento e retorna false para indicar que nao eh xeque-mate
-				if (!this.isEmXeque(tabuleiroPrevisto))
+				// Mas antes restaura o status de xeque que foi contaminado pela simulação
+				if (!this.isEmXeque(tabuleiroPrevisto, false)) {
 					return false;
+				}
 				
 				// Essa tentativa nao deu, entao retorna o tabuleiro para a posicao inicial para a verificacao seguinte...
 				// Para isso, basta inverter origem e destino, e atualizar o tabuleiro novamente
-				jogadaTeste.origem = casaAux2;
-				jogadaTeste.destino = casaAux;
+				jogadaTeste.setCasaOrigem(casaAux2);
+				jogadaTeste.setCasaDestino(casaAux);
 				tabuleiroPrevisto = tabuleiro.copiaTabuleiro();					
 			}				
-		}					
-			
+		}
+		
+		if(atualizaFlags) {
+			this.setXeque(true);
+			this.setXequeMate(true);
+		}	
 		return true;
 	}
 	
@@ -294,12 +383,8 @@ public class PecaRei extends Peca {
 	 * @return true se esta em xeque, false caso contrario
 	 * Obs. Este metodo so faz sentido para pecas unicas (rei e dama)
 	 */
-	public boolean estaSendoAmeacado (Stack<Casa> casasAmeacadas) {
-		while (!casasAmeacadas.isEmpty()) {
-			if (casasAmeacadas.pop().peca.getTipoPeca() == this.getTipoPeca())
-				return true;
-		}		
-		return false;
+	public boolean estaSendoAmeacado (Casa casa, Stack<Casa> casasAmeacadas) {
+		return casasAmeacadas.contains(casa);
 	}
 	
 	/**
@@ -309,27 +394,45 @@ public class PecaRei extends Peca {
 	 * @param jogada
 	 * @return true, se o movimento for um roque grande valido
 	 */
-	public boolean verificarRoque (Tabuleiro tabuleiro, Jogada jogada) {
+	public boolean verificarRoque (Tabuleiro tabuleiro, Jogada jogada, boolean atualizarFlags) {
+		if(atualizarFlags) {
+			this.setRoque(false);
+			jogada.setRoque(false);			
+		}
+		
 		// Se nao for um movimento do rei, nao pode ser roque
-		if (!jogada.origem.peca.isRei())
+		if (!jogada.getCasaOrigem().getPeca().isRei())
 			return false;
 		
 		// Nao pode fazer roque quando esta em xeque
-		if (this.xeque)
+		if (this.emXeque() || this.emXequeMate())
 			return false;
 		
 		if (this.isBranca()) {
 			// Verifica se eh um rei branco saindo da coordenada e1...
 			if (tabuleiro.getPecaEm('e', 1) == 'R') {
 				// Verifica se o destino dele for g1, possivel roque
-				if (jogada.destino.getCoordenadaX() == 'g' && jogada.destino.getCoordenadaY() == 1) {
+				if (jogada.getCasaDestino().getCoordenadaX() == 'g' && jogada.getCasaDestino().getCoordenadaY() == 1) {
 					// Verifica se tem uma torre branca em a1
 					if (tabuleiro.getPecaEm('h', 1) == 'T') {
 						// Verifica se nao tem nenhuma peca no meio do caminho (entre e1 e h1)
 						if (tabuleiro.getPecaEm('f', 1) == ' ' && tabuleiro.getPecaEm('g', 1) == ' ') {
 							// Verifica se o rei branco ja se moveu
-							if (!this.jaMoveu)
-								return true;
+							if (!this.jaMoveu) {
+								// Simula um movimento do rei para f1 e verifica se fica em xeque
+								Tabuleiro tabuleiroAux = tabuleiro.copiaTabuleiro();
+								Casa casaOrigem = new Casa ('e', 1, 'R');
+								Casa casaDestino = new Casa ('f', 1);
+								Jogada j = new Jogada (casaOrigem, casaDestino);
+								tabuleiroAux.atualizarTabuleiro(j);
+								if(!this.isEmXeque(tabuleiroAux, false)){
+									if (atualizarFlags) {
+										this.setRoque(true);
+										jogada.setRoque(true);
+									}
+									return true;
+								}
+							}	
 						}
 					}
 				}
@@ -339,14 +442,27 @@ public class PecaRei extends Peca {
 			// Verifica se eh um rei preto saindo da coordenada e8...
 			if (tabuleiro.getPecaEm('e', 8) == 'r') {
 				// Verifica se o destino dele for c1, possivel roque grande
-				if (jogada.destino.getCoordenadaX() == 'g' && jogada.destino.getCoordenadaY() == 8) {
+				if (jogada.getCasaDestino().getCoordenadaX() == 'g' && jogada.getCasaDestino().getCoordenadaY() == 8) {
 					// Verifica se tem uma torre preta em a1
 					if (tabuleiro.getPecaEm('h', 8) == 't') {
 						// Verifica se nao tem nenhuma peca no meio do caminho (entre e1 e a1)
 						if (tabuleiro.getPecaEm('f', 8) == ' ' && tabuleiro.getPecaEm('g', 8) == ' ') {
 							// Verifica se o rei branco ja se moveu
-							if (!this.jaMoveu)
-								return true;
+							if (!this.jaMoveu) {
+								// Simula um movimento do rei para f8 e verifica se fica em xeque
+								Tabuleiro tabuleiroAux = tabuleiro.copiaTabuleiro();
+								Casa casaOrigem = new Casa ('e', 8, 'r');
+								Casa casaDestino = new Casa ('f', 8);
+								Jogada j = new Jogada (casaOrigem, casaDestino);
+								tabuleiroAux.atualizarTabuleiro(j);
+								if(!this.isEmXeque(tabuleiroAux, false)){
+									if(atualizarFlags) {
+										this.setRoque(true);
+										jogada.setRoque(true);
+									}
+									return true;
+								}
+							}
 						}
 					}
 				}
@@ -363,27 +479,45 @@ public class PecaRei extends Peca {
 	 * @param jogada
 	 * @return true, se o movimento for um roque grande valido
 	 */
-	public boolean verificarRoqueGrande (Tabuleiro tabuleiro, Jogada jogada) {
+	public boolean verificarRoqueGrande (Tabuleiro tabuleiro, Jogada jogada, boolean atualizarFlags) {
+		if(atualizarFlags) {
+			this.setRoqueGrande(false);
+			jogada.setRoqueGrande(false);			
+		}
+				
 		// Se nao for um movimento do rei, nao pode ser roque
-		if (!jogada.origem.peca.isRei())
+		if (!jogada.getCasaOrigem().getPeca().isRei())
 			return false;
 		
 		// Nao pode fazer roque quando esta em xeque
-		if (this.xeque)
+		if (this.emXeque() || this.emXequeMate())
 			return false;
 		
 		if (this.isBranca()) {
 			// Verifica se eh um rei branco saindo da coordenada e1...
 			if (tabuleiro.getPecaEm('e', 1) == 'R') {
 				// Verifica se o destino dele for c1, possivel roque grande
-				if (jogada.destino.getCoordenadaX() == 'c' && jogada.destino.getCoordenadaY() == 1) {
+				if (jogada.getCasaDestino().getCoordenadaX() == 'c' && jogada.getCasaDestino().getCoordenadaY() == 1) {
 					// Verifica se tem uma torre branca em a1
 					if (tabuleiro.getPecaEm('a', 1) == 'T') {
 						// Verifica se nao tem nenhuma peca no meio do caminho (entre e1 e a1)
 						if (tabuleiro.getPecaEm('b', 1) == ' ' && tabuleiro.getPecaEm('c', 1) == ' ' && tabuleiro.getPecaEm('d', 1) == ' ') {
 							// Verifica se o rei branco ja se moveu
-							if (!this.jaMoveu)
-								return true;
+							if (!this.jaMoveu) {
+								// Simula um movimento do rei para f8 e verifica se fica em xeque
+								Tabuleiro tabuleiroAux = tabuleiro.copiaTabuleiro();
+								Casa casaOrigem = new Casa ('e', 1, 'R');
+								Casa casaDestino = new Casa ('d', 1);
+								Jogada j = new Jogada (casaOrigem, casaDestino);
+								tabuleiroAux.atualizarTabuleiro(j);
+								if(!this.isEmXeque(tabuleiroAux, false)){
+									if(atualizarFlags) {
+										this.setRoqueGrande(true);
+										jogada.setRoqueGrande(true);
+									}									
+									return true;
+								}
+							}
 						}
 					}
 				}
@@ -393,14 +527,27 @@ public class PecaRei extends Peca {
 			// Verifica se eh um rei preto saindo da coordenada e8...
 			if (tabuleiro.getPecaEm('e', 8) == 'r') {
 				// Verifica se o destino dele for c1, possivel roque grande
-				if (jogada.destino.getCoordenadaX() == 'c' && jogada.destino.getCoordenadaY() == 8) {
+				if (jogada.getCasaDestino().getCoordenadaX() == 'c' && jogada.getCasaDestino().getCoordenadaY() == 8) {
 					// Verifica se tem uma torre preta em a1
 					if (tabuleiro.getPecaEm('a', 8) == 't') {
 						// Verifica se nao tem nenhuma peca no meio do caminho (entre e1 e a1)
 						if (tabuleiro.getPecaEm('b', 8) == ' ' && tabuleiro.getPecaEm('c', 8) == ' ' && tabuleiro.getPecaEm('d', 8) == ' ') {
 							// Verifica se o rei branco ja se moveu
-							if (!this.jaMoveu)
-								return true;
+							if (!this.jaMoveu) {
+								// Simula um movimento do rei para f8 e verifica se fica em xeque
+								Tabuleiro tabuleiroAux = tabuleiro.copiaTabuleiro();
+								Casa casaOrigem = new Casa ('e', 8, 'r');
+								Casa casaDestino = new Casa ('d', 8);
+								Jogada j = new Jogada (casaOrigem, casaDestino);
+								tabuleiroAux.atualizarTabuleiro(j);
+								if(!this.isEmXeque(tabuleiroAux, false)){
+									if(atualizarFlags) {
+										this.setRoqueGrande(true);
+										jogada.setRoqueGrande(true);
+									}
+									return true;
+								}
+							}
 						}
 					}
 				}

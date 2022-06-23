@@ -7,17 +7,25 @@ public class Peca {
 	protected boolean cor; // TRUE = brancas, FALSE = pretas
 	protected int valorHeuristicoPadrao;
 	
+	
+	//
 	// Construtores
+	//
+
 	public Peca() {
-		new Peca('P');
+		setTipoPeca('P'); // Cor e Valor Heuristico sao setados dentro do metodo setTipoPeca
+
 	}
 	
 	public Peca(char tipoPeca) {
-		// Tipo da Peca
 		setTipoPeca(tipoPeca); // Cor e Valor Heuristico sao setados dentro do metodo setTipoPeca
 	}
 
-	// Metodos Setters e Getters
+	
+	//
+	// Setters e Getters
+	//
+	
 	public char getTipoPeca() {
 		return this.tipoPeca;
 	}
@@ -62,56 +70,7 @@ public class Peca {
 	public void setValorHeuristicoPadrao(int valorHeuristicoPadrao) {
 		this.valorHeuristicoPadrao = valorHeuristicoPadrao;
 	}
-
-	// Logica
-	public boolean isMovimentoValido(Jogada jogada, Tabuleiro tabuleiro, boolean vezDasBrancas) {
-		// Implementada nas subclasses atraves de polimorfismo		
-		return false;
-	}
 	
-	/**
-	 * Este metodo verifica quais casas estarao no range de ataque da peca, estando ela na casa indicada.
-	 * O retorno deste metodo tambem pode ser interpretado como uma lista de movimentos potencialmente validos (desconsiderando xeque).
-	 * @param tabuleiro - para saber o contexto atual do jogo
-	 * @param jogada - para saber onde a peca esta se movendo
-	 * @param vezDasBrancas - para saber quem efetuou a jogada
-	 * @return uma pilha de Casas com as casas ameacadas. 
-	 * 			Naturalmente as casas ameacadas somente podem ser da cor oposta a peca ameacante, ou entao vazias (' ').
-	 */
-	public Stack<Casa> ameaca(Tabuleiro tabuleiro, Casa casa, boolean vezDasBrancas) {
-		// Implementada nas subclasses atraves de polimorfismo
-		Stack<Casa> casasAmeacadas = new Stack<Casa>();
-		return casasAmeacadas;
-	}
-	
-	/**
-	 * 
-	 * @param tabuleiro
-	 * @return A quantidade de pecas do oponente que estao atacando esta casa
-	 */
-	public int sobAmeaca(Tabuleiro tabuleiro, Casa casa) {
-		Stack<Casa> casasComPecasDoOponente = tabuleiro.casasComPecasDestaCor(!this.isBranca());
-		Stack<Casa> ameacas = new Stack<Casa> ();
-		Casa casaAux;
-		Peca pecaAux;
-		int qtdDeAmeacas = 0;
-		
-		while(!casasComPecasDoOponente.isEmpty()) {
-			casaAux = casasComPecasDoOponente.pop();
-			pecaAux = casaAux.getPeca();
-			ameacas = pecaAux.ameaca(tabuleiro, casaAux, pecaAux.isBranca());
-			if (ameacas.contains(casa))
-				qtdDeAmeacas++;
-		}
-		
-		return qtdDeAmeacas;
-	}
-	
-	public Stack<Casa> movimentosValidos (Tabuleiro tabuleiro, Casa casa, Jogada ultimaJogada, Boolean vezDasBrancas){
-		return this.ameaca(tabuleiro, casa, vezDasBrancas);	
-	}
-	
-	// Metodos auxiliares
 	public boolean isPeca() {
 		if (getTipoPeca() == 'p' || getTipoPeca() == 'c' || getTipoPeca() == 'b' || getTipoPeca() == 't' || getTipoPeca() == 'd' || getTipoPeca() == 'r' ||
 			getTipoPeca() == 'P' || getTipoPeca() == 'C' || getTipoPeca() == 'B' || getTipoPeca() == 'T' || getTipoPeca() == 'D' || getTipoPeca() == 'R')
@@ -165,5 +124,84 @@ public class Peca {
 	public boolean isRei() {
 		return (getTipoPeca() == 'R' || getTipoPeca() == 'r');
 	}
+	
+	
+	//
+	// Overrides Úteis
+	//
+	
+	@Override
+	protected Object clone() throws CloneNotSupportedException {
+		return new Peca(this.getTipoPeca());
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof Peca))
+			return false;
 		
+		Peca peca = (Peca) obj;
+		
+		return this.getTipoPeca() == peca.getTipoPeca();
+	}
+
+	@Override
+	public String toString() {
+		return Character.toString(this.getTipoPeca());
+	}
+	
+	
+	//
+	// Lógica
+	//
+	
+	public boolean isMovimentoValido(Jogada jogada, Tabuleiro tabuleiro, boolean vezDasBrancas) {
+		// Implementada nas subclasses atraves de polimorfismo		
+		return false;
+	}
+	
+	/**
+	 * Este metodo verifica quais casas estarao no range de ataque da peca, estando ela na casa indicada.
+	 * O retorno deste metodo tambem pode ser interpretado como uma lista de movimentos potencialmente validos (desconsiderando xeque).
+	 * @param tabuleiro - para saber o contexto atual do jogo
+	 * @param jogada - para saber onde a peca esta se movendo
+	 * @param vezDasBrancas - para saber quem efetuou a jogada
+	 * @return uma pilha de Casas com as casas ameacadas. 
+	 * 			Naturalmente as casas ameacadas somente podem ser da cor oposta a peca ameacante, ou entao vazias (' ').
+	 */
+	public Stack<Casa> ameaca(Tabuleiro tabuleiro, Casa casa, boolean vezDasBrancas) {
+		// Implementada nas subclasses atraves de polimorfismo
+		return new Stack<Casa>();
+	}
+	
+	/**
+	 * 
+	 * @param tabuleiro
+	 * @return A quantidade de pecas do oponente que estao atacando esta casa
+	 */
+	public int sobAmeaca(Tabuleiro tabuleiro, Casa casa) {
+		int qtdDeAmeacas = 0;
+		Casa casaAux;
+		Peca pecaAux;
+		Stack<Casa> ameacas = new Stack<Casa> ();
+		Stack<Casa> casasComPecasDoOponente = tabuleiro.casasComPecasDestaCor(!this.isBranca());
+	
+		while(!casasComPecasDoOponente.isEmpty()) {
+			casaAux = casasComPecasDoOponente.pop();
+			pecaAux = casaAux.getPeca();
+			ameacas = pecaAux.ameaca(tabuleiro, casaAux, pecaAux.isBranca());
+			if (ameacas.contains(casa))
+				qtdDeAmeacas++;
+		}
+		
+		return qtdDeAmeacas;
+	}
+	
+	public Stack<Casa> movimentosValidos (Tabuleiro tabuleiro, Casa casa, Jogada ultimaJogada, Boolean vezDasBrancas){
+		return this.ameaca(tabuleiro, casa, vezDasBrancas);	
+	}
+	
+	public Stack<Casa> movimentosValidos (Tabuleiro tabuleiro, Casa casa, Jogada ultimaJogada, Boolean vezDasBrancas, boolean atualizarFlags){
+		return this.ameaca(tabuleiro, casa, vezDasBrancas);	
+	}	
 }

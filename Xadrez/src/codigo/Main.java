@@ -18,7 +18,7 @@ public class Main {
 		while (nomeJogadorBrancas.equals(""))
 			nomeJogadorBrancas = input.nextLine();
 		if(nomeJogadorBrancas.equals("IA")) 
-			jogadorBrancas = new IA_v0(false, true, nomeJogadorBrancas);
+			jogadorBrancas = new IA_v01(false, true, nomeJogadorBrancas);
 		else
 			jogadorBrancas = new Jogador(true, true, nomeJogadorBrancas);
 		
@@ -27,7 +27,7 @@ public class Main {
 		while (nomeJogadorPretas.equals(""))
 			nomeJogadorPretas = input.nextLine();
 		if(nomeJogadorPretas.equals("IA")) 
-			jogadorPretas = new IA_v0(false, false, nomeJogadorPretas);
+			jogadorPretas = new IA_v01(false, false, nomeJogadorPretas);
 		else
 			jogadorPretas = new Jogador(true, false, nomeJogadorPretas);
 			

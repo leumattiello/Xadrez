@@ -3,7 +3,10 @@ package codigo;
 import java.util.Stack;
 
 public class PecaCavalo extends Peca {
-	// Construtor
+	//
+	// Construtores
+	//
+	
 	public PecaCavalo() {
 		super('C');
 	}
@@ -12,7 +15,16 @@ public class PecaCavalo extends Peca {
 		super(tipoPeca);
 	}
 
-	// Logica
+	
+	//
+	// Setters, Getters e Overrides Úteis implementados na superclasse
+	//
+	
+	
+	//
+	// Lógica
+	//
+	
 	@Override
 	public boolean isMovimentoValido(Jogada jogada, Tabuleiro tabuleiro, boolean vezDasBrancas) {
 		if (jogada.getDeslocamentoX() == 2 && jogada.getDeslocamentoY() == 1)
@@ -44,10 +56,10 @@ public class PecaCavalo extends Peca {
 	 */
 	@Override
 	public Stack<Casa> ameaca(Tabuleiro tabuleiro, Casa casa, boolean vezDasBrancas) {
-		Stack<Casa> casasAmeacadas = new Stack<Casa>();
-		Peca pecaAux = new Peca();
 		int intFromCharAux = 0;
-		
+		Peca pecaAux = new Peca();
+		Stack<Casa> casasAmeacadas = new Stack<Casa>();
+				
 		// No caso do cavalo, sao potencialmente 8 casas que devem ser verificadas.
 		// 2 para frente e 1 para direita
 		if (casa.getCoordenadaX() < 'h' && casa.getCoordenadaY() < 7) {
