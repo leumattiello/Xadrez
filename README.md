@@ -1,3 +1,5 @@
+#Xadrez
+
 Um jogo de xadrez simples para ser jogado em 2 ou contra uma IA.
 
 Interface de usuário ainda precisa ser desenvolvida, mas já é jogável utilizando o prompt de comando.
